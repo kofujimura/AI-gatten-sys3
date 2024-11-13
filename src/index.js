@@ -40,12 +40,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("post", (data) => {
-    const regexp = /角野卓造/;
     io.emit("post", { id: socket.id.substring(0, 6), post: data });
-    if (regexp.test(data)) {
-      data = "角野卓造じゃねーよ";
-      io.emit("post", { id: "Computer", post: data });
-    }
   });
 
   socket.on("aibot", async function (data) {
@@ -84,75 +79,14 @@ io.on("connection", (socket) => {
     io.to(data.room).emit("sensor", data);
   });
 
-  socket.on("sensor-toall", (data) => {
-    io.emit("sensor", data);
-  });
 });
 
-/*
-
-import dotenv from "dotenv";
-dotenv.config();
-const { OpenAI } = require("openai");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY2,
-});
-
-// Express
-const express = require("express"),
-  https = require("http"),
-  app = express();
-
-// Gatten System
-app.use(express.static(__dirname + "/public"));
-
-const server = https.createServer(app).listen(8080);
-console.log("server start!!:", 8080);
-
-// Socket.IO
-const io = require("socket.io")(server);
-
-io.sockets.on("connection", function (socket) {
-  socket.emit("mylogin", socket.id.substr(0, 6));
-  io.sockets.emit("login", socket.id.substr(0, 6));
-
-  socket.on("disconnect", function () {
-    io.sockets.emit("logout", socket.id.substr(0, 6));
-  });
-
-  socket.on("post", async function (data) {
-    io.sockets.emit("post", { id: socket.id.substr(0, 6), post: data });
-  });
-
-  socket.on("aibot", async function (data) {
-    io.sockets.emit("post", { id: socket.id.substr(0, 6), post: data });
-    let text = await getAnswer(data);
-    console.log(text);
-    //console.log(response.data.choices[0].text);
-    io.sockets.emit("aibot", {
-      id: "AI_bot",
-      post: text,
-    });
-  });
-
-  socket.on("stamp", function (data) {
-    io.sockets.emit("stamp", { id: socket.id.substr(0, 6), stamp: data });
-  });
-
-  socket.on("img", function (data) {
-    io.sockets.emit("img", { id: socket.id.substr(0, 6), img: data });
-  });
-});
-*/
 const maxUserTokens = 5;
 const systemTokens = [
   {
     role: "system",
     content:
       "私は、猫です。7歳でメスです。名前はムギと言います。語尾にニャンをつけて可愛く答えます。回答は60字以内。",
-    //別の面白いプロンプトの例：
-    //"入力した仕様のp5.jsのプログラムコードを出力します。出力するのはJavaScriptのコードのみで言葉は一切出力しません。"
   },
 ];
 const userTokens = [];
