@@ -1,0 +1,117 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AI Cat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+  </head>
+  <style>
+    .center-box {
+      text-align: center;
+    }
+    .large-text {
+      font-size: 4rem;
+    }
+  </style>
+  <body>
+    <p class="center-box"><img id="mic" src="micoff.svg" /></p>
+    <div id="result-div" class="large-text"></div>
+    <script>
+      let socket = io.connect();
+      let myid;
+      let speaking = false;
+      const resultDiv = document.querySelector("#result-div");
+      const micDiv = document.querySelector("#mic");
+      resultDiv.innerHTML = "マイクをクリックして話してください"
+
+      // 音声認識機能(Chrome)
+      let rec = new webkitSpeechRecognition();
+      let stopped = true;
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "ja-JP";
+
+      micDiv.onclick = function () {
+        if (stopped) {
+          stopped = false;
+          rec.start();
+          micDiv.setAttribute("src", "micon.svg");
+          resultDiv.innerHTML = "";   
+        } else {
+          stopped = true;
+          rec.stop();
+          micDiv.setAttribute("src", "micoff.svg");
+        }
+      };
+
+      rec.onstart = function () {
+        console.log("restarted");
+      };
+
+      rec.onend = restartRecognition;
+      
+      async function restartRecognition () {
+        while (speaking) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+        if (stopped == false) {
+          micDiv.setAttribute("src", "micon.svg");        
+          rec.start();
+        }
+      }
+
+      rec.onresult = function (e) {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            let text = e.results[i][0].transcript;
+            if (text != "") {
+              resultDiv.innerHTML = text;
+              socket.emit("aibot", text);
+            }
+          }
+        }
+      };
+
+      // 発話機能をインスタンス化
+      let msg = new SpeechSynthesisUtterance();
+
+      function speak(text) {
+        msg.volume = 1.0; // 音量 min 0 ~ max 1
+        msg.rate = 1.1; // 速度 min 0 ~ max 10
+        msg.pitch = 1.4; // 音程 min 0 ~ max 2
+
+        msg.text = text; // 喋る内容
+        msg.lang = "ja-JP"; // en-US or ja-JP
+        //msg.lang = "en-US"; // en-US or ja-JP
+
+        // 発話実行
+        speechSynthesis.speak(msg);
+      }
+
+      // 終了時の処理
+      msg.onend = function (event) {
+        console.log("speaking stopped");
+        speaking = false;
+      };
+
+      socket.on("mylogin", function (data) {
+        console.log("mylogin received", data);
+      });
+
+      socket.on("login", function (data) {
+        console.log(data + " joined");
+      });
+      
+      socket.on("aibot", function (data) {   
+        console.log("speaking started");
+        micDiv.setAttribute("src", "micoff.svg");        
+        speaking = true;
+        rec.abort();
+        let text = data.post;
+        resultDiv.innerHTML = text;
+        speak(text);
+      });
+      
+      
+    </script>
+  </body>
+</html>

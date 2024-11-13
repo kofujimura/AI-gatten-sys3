@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>なにか質問ある？</title>
+
+    <!-- Bootstrap -->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+      crossorigin="anonymous"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+    <style>
+      /* ヘッダーとフッターの固定 */
+      body {
+        height: 100%;
+        overflow: hidden;
+        background-color: #88bbdd;
+      }
+
+      #messages {
+        position: absolute;
+        top: 60px;
+        bottom: 70px;
+        right: 0;
+        left: 0;
+        overflow-y: auto;
+      }
+
+      footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 70px;
+      }
+
+      span.myid {
+        float: right;
+        margin-left: auto;
+      }
+
+      #stampmenu {
+        position: absolute;
+        top: 60px;
+        bottom: 70px;
+        right: 0;
+        left: 0;
+        overflow-y: auto;
+      }
+
+      #stampmenu img {
+        transition: transform 0.3s linear;
+      }
+
+      #stampmenu img:hover {
+        transform: scale(2);
+      }
+
+      img.my-stamp {
+        width: 128px;
+        height: 128px;
+      }
+      img.my-stamp2 {
+        width: 64px;
+        height: 64px;
+      }
+
+      img.others-stamp {
+        position: relative;
+        left: 32px;
+        top: -10px;
+        width: 128px;
+        height: 128px;
+        display: table-cell;
+        vertical-align: text-top;
+      }
+
+      img.slide {
+        position: relative;
+        left: 32px;
+        top: -10px;
+        width: 60%;
+        height: auto;
+        display: table-cell;
+        vertical-align: text-top;
+      }
+
+      img.others-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 16px;
+      }
+
+      span.others-id {
+        vertical-align: text-top;
+      }
+
+      div.my-baloon {
+        float: right;
+        padding: 4px;
+        border: 0px;
+        display: table-cell;
+        background-color: transparent;
+        background-image: url("img/my-baloon.svg");
+        background-repeat: no-repeat;
+        background-position: right top;
+      }
+
+      div.my-mes {
+        margin-right: 10px;
+        /* margin-left: auto; */
+        max-width: 250px;
+        padding: 3px;
+        border: 0px;
+        border-radius: 12px;
+        text-align: left;
+        display: table-cell;
+        vertical-align: text-top;
+        background-color: lightgreen;
+      }
+
+      div.clear-float {
+        clear: both;
+      }
+
+      div.others-baloon {
+        float: relative;
+        left: 32px;
+        top: -6px;
+        padding: 4px;
+        border: 0px;
+        display: table-cell;
+        background-color: transparent;
+        background-image: url("img/others-baloon.svg");
+        background-repeat: no-repeat;
+        background-position: left top;
+      }
+
+      div.others-mes {
+        position: relative;
+        left: 0px;
+        max-width: 250px;
+        padding: 3px;
+        border: 0px;
+        border-radius: 12px;
+        text-align: left;
+        display: table-cell;
+        vertical-align: text-top;
+        background-color: white;
+      }
+
+      div.login {
+        color: white;
+      }
+
+      .white-char {
+        color: white;
+      }
+
+      .list-group {
+        margin-bottom: 20px;
+        padding-left: 0;
+      }
+
+      .list-group-item {
+        position: relative;
+        display: block;
+        padding: 2px 3px;
+        /* margin-bottom: -1px;*/
+        background-color: transparent;
+        border: 0px;
+      }
+
+      .top {
+        margin: 0;
+        padding: 0;
+        position: fixed;
+        right: 30px;
+        top: 10px;
+      }
+      .top2 {
+        margin: 0;
+        padding: 0;
+        position: fixed;
+        right: 150px;
+        top: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-dark bg-primary">
+      <div class="container">
+        <div class="navbar-header">
+          <span class="navbar-brand">ガッテン</span>
+        </div>
+        <div>
+          <div class="top2">
+            <button id="top3" type="button" class="btn btn-sm btn-primary">
+              先頭へ
+            </button>
+            <button id="top4" type="button" class="btn btn-sm btn-primary">
+              最新へ
+            </button>
+          </div>
+          <div id="top1" class="top">
+            <button type="button" class="btn btn-sm btn-danger">
+              スクロールON
+            </button>
+          </div>
+          <div id="top2" class="top">
+            <button type="button" class="btn btn-sm btn-info">
+              スクロールOFF
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div id="messages" class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <p class="myID"></p>
+          <ul id="posts" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="stampmenu" tabindex="-1">
+      <div class="modal-dialog" role="document">
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row">
+              <div id="stamps" class="col-md-12" data-dismiss="modal"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer footer-dark bg-primary">
+      <div class="container">
+        <div onsubmit="sendMessage();">
+          <div id="input" class="form-group">
+            <input
+              id="message"
+              type="text"
+              class="form-control"
+              size="20"
+              placeholder="メッセージを入力"
+            />
+            <!--<input type="text" name="dummy" style="display:none;"/>-->
+            <button id="askai" type="button" class="btn btn-sm btn-primary">
+              AIに聞く
+            </button>
+            <button id="update" type="button" class="btn btn-sm btn-primary">
+              書き込む（だけ）
+            </button>
+            <button
+              id="stamp"
+              type="button"
+              class="btn btn-sm btn-primary"
+              data-toggle="modal"
+              data-target="#stampmenu"
+            >
+              スタンプ
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      $(function () {
+        let socket = io.connect(),
+          $posts = $("ul#posts"),
+          $content = $("#content"),
+          $message = $("#message"),
+          $input = $("#input"),
+          $input2 = $("#input2"),
+          $top = $("#top"),
+          $stampmenu = $("#stampmenu");
+
+        let myid;
+        let roll = 0;
+        let stm = 0;
+
+        // スタンプの生成
+        //let stampBaseUrl = "https://qa.fujimura.com/img/";
+        let stampBaseUrl = "stamps/";
+        let stamps = [
+          "cat01.png",
+          "cat02.png",
+          "cat03.png",
+          "cat04.png",
+          "cat05.png",
+          "cat06.png",
+          "cat07.png",
+          "cat08.png",
+          "cat09.png",
+          "cat10.png",
+          "cat11.png",
+          "panda01.png",
+          "panda02.png"
+        ];
+
+        for (stamp in stamps) {
+          $("#stamps").append(
+            "<img class='my-stamp2' src='" +
+              stampBaseUrl +
+              stamps[stamp] +
+              "'/>"
+          );
+        }
+
+        //let audio = new Audio();
+        //audio.src = "https://qa.fujimura.com/sounds/gatten.mp3";
+
+        $stampmenu.hide();
+
+        socket.on("mylogin", function (data) {
+          console.log("mylogin received", data);
+          myid = data;
+          let $myid = $(".myID");
+          let $id = $('<span class="myid">あなたのID: ' + myid + " </span>");
+          let $icon = $('<img class="others-icon" src="img/user04s.png">').css({
+            "background-color": idToColor(myid)
+          });
+          $icon.appendTo($id);
+          $id.appendTo($myid);
+        });
+
+        socket.on("login", function (data) {
+          if (myid == data) {
+            let $li = $('<li class="list-group-item text-right" >');
+            let $clear = $('<div class="clear-float">');
+            $clear.appendTo($li);
+            $li.appendTo($posts);
+          } else {
+            let $li = $('<li class="list-group-item" >');
+            let $mes = $(
+              '<div class="login">ID: ' + data + " が参加しました</div>"
+            );
+            $mes.appendTo($li);
+            $li.appendTo($posts);
+            if (roll == 0) {
+              scrollMessages();
+            }
+          }
+        });
+
+        socket.on("post", function (data) {
+          if (data.id == myid) {
+            // 自分のIDと同じ場合、右側に吹き出し表示
+            let $li = $('<li class="list-group-item text-right" >');
+            let $mes = $(
+              '<div class="my-baloon"><div class="my-mes">' +
+                data.post +
+                "<div/></div>"
+            );
+            $mes.appendTo($li);
+            let $clear = $('<div class="clear-float">');
+            $clear.appendTo($li);
+            $li.appendTo($posts);
+          } else {
+            // 自分のIDと異なる場合、左側に吹き出し表示
+            let $li = $('<li class="list-group-item" >');
+            let $id = $('<span class="others-id">ID: ' + data.id + "</span>");
+            let $icon = $(
+              '<img class="others-icon" src="img/user04s.png">'
+            ).css({ "background-color": idToColor(data.id) });
+            $icon.prependTo($id);
+            $id.appendTo($li);
+            let $mes = $(
+              '<div class="others-baloon"><div class="others-mes">' +
+                data.post +
+                "</div></div>"
+            );
+            $mes.appendTo($li);
+            $li.appendTo($posts);
+          }
+
+          if (roll == 0) {
+            scrollMessages();
+          }
+        });
+
+        socket.on("aibot", function (data) {
+          let $li = $('<li class="list-group-item" >');
+          let $id = $('<span class="others-id">ID: ' + data.id + "</span>");
+          let $icon = $(
+              '<img class="others-icon" src="stamps/cat02.png">'
+          ).css({ "background-color":"transparent" });
+          $icon.prependTo($id);
+          $id.appendTo($li);
+          let $mes = $(
+            '<div class="others-baloon"><div class="others-mes">' +
+            data.post +
+            "</div></div>"
+          );
+          $mes.appendTo($li);
+          $li.appendTo($posts);            
+
+          if (roll == 0) {
+            scrollMessages();
+          }
+        });
+
+        socket.on("stamp", function (data) {
+          if (data.id == myid) {
+            let $li = $('<li class="list-group-item text-right" >');
+            let $stamp = $('<img class="my-stamp" src="' + data.stamp + '" >');
+            $stamp.appendTo($li);
+            $li.appendTo($posts);
+          } else {
+            let $li = $('<li class="list-group-item" >');
+            let $id = $('<span class="others-id">ID: ' + data.id + "</span>");
+            let $icon = $(
+              '<img class="others-icon" src="img/user04s.png">'
+            ).css({ "background-color": idToColor(data.id) });
+            $icon.prependTo($id);
+            $id.appendTo($li);
+            let $stamp = $(
+              '<img class="others-stamp" src="' + data.stamp + '" >'
+            );
+            $stamp.appendTo($li);
+            $li.appendTo($posts);
+          }
+
+          if (roll == 0) {
+            scrollMessages();
+          }
+        });
+
+
+        // 発話機能をインスタンス化
+        let msg = new SpeechSynthesisUtterance();
+        let voices = window.speechSynthesis.getVoices();
+
+        function speak(text) {
+          // 以下オプション設定
+          msg.volume = 1.0; // 音量 min 0 ~ max 1
+          msg.rate = 1.0; // 速度 min 0.5 ~ max 3.5
+          msg.pitch = 1.5; // 音程 min 0 ~ max 2
+
+          msg.text = text; // 喋る内容
+          msg.lang = "ja-JP"; // en-US or ja-JP
+          // msg.lang = 'en-US'; // en-US or ja-JP
+
+          // 発話実行
+          speechSynthesis.speak(msg);
+        }
+
+        $("#message").on("keypress", function (e) {
+          if (e.which === 13) {
+            let message = $message.val();
+            if (message.length === 0) return;
+            socket.emit("aibot", message);
+            $message.val("");
+          }
+        });
+
+        $("#askai").on("click", function (e) {
+          let message = $message.val();
+          if (message.length === 0) return;
+          socket.emit("aibot", message);
+          $message.val("");
+        });
+
+        $("#update").on("click", function (e) {
+          let message = $message.val();
+          if (message.length === 0) return;
+          socket.emit("post", message);
+          $message.val("");
+        });
+
+        $("#stamp").on("click", function (e) {
+          $stampmenu.fadeIn();
+        });
+
+        $("img.my-stamp2").on("click", function (e) {
+          let message = $(this).attr("src");
+          socket.emit("stamp", message);
+          $stampmenu.fadeOut();
+        });
+
+        $("#top1").on("click", function (e) {
+          roll = 1;
+          $top.hide();
+          $top2.show();
+        });
+
+        $("#top2").on("click", function (e) {
+          roll = 0;
+          $top2.hide();
+          $top.show();
+        });
+
+        $("#top3").on("click", function (e) {
+          $("#messages").animate({ scrollTop: 0 }, "slow");
+        });
+
+        $("#top4").on("click", function (e) {
+          $("#messages").animate(
+            { scrollTop: $("#messages")[0].scrollHeight },
+            "slow"
+          );
+        });
+
+        function sendMessage() {
+          let message = $message.val();
+          if (message.length === 0) return;
+          socket.emit("post", message);
+          $message.val("");
+        }
+
+        function scrollMessages() {
+          $("#messages").animate(
+            { scrollTop: $("#messages")[0].scrollHeight },
+            "slow"
+          );
+        }
+
+        function idToColor(id) {
+          let bin = atob(id.replace(/[\_\-]+/, "8"));
+          let hex = "";
+          for (let i = 0; i < bin.length; i++) {
+            let tmp = bin.charCodeAt(i).toString(16);
+            if (tmp.length === 1) tmp = "0" + tmp;
+            hex += tmp;
+          }
+          return "#" + hex.substr(0, 6);
+        }
+
+        $(window).on("beforeunload", function () {
+          return "このページを離れると全てのメッセージ削除されます。よろしいですか？";
+        });
+      });
+    </script>
+  </body>
+</html>

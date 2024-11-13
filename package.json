@@ -1,0 +1,22 @@
+{
+  "name": "ai-gatten",
+  "version": "1.0.0",
+  "description": "",
+  "type":"module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "http": "0.0.1-security",
+    "socket.io": "4.5.1",
+    "url": "0.11.4"
+  },
+  "devDependencies": {
+    "express": "4.21.1",
+    "nodemon": "1.18.4",
+    "openai": "4.71.1"
+  },
+  "keywords": []
+}
